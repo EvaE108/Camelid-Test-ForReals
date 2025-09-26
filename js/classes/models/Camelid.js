@@ -1,7 +1,7 @@
 import {Model} from "./models.js";
 
 let bonesList = [
-    "Bread_Pack"
+    "Organs/Bread_Pack"
 ];
 
 export default new Model(
