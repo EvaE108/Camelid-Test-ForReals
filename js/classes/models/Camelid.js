@@ -2,7 +2,7 @@ import {Model} from "./models.js";
 
 let bonesList = [
     "Organs/Bread_Pack",
-    "Other/Puppy",
+    "Organs/Fruits_Vegetables",
     "Organs/Placeholder"
 ];
 
