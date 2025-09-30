@@ -14,6 +14,34 @@ import {LoadModels} from "./js/classes/models/models.js";
 import generatePaws from "./js/bgpawgenerator.js";
 
 // My own libraries
+
+// === Camelid Change View (Toggle) ===
+var CAMELID_VIEW_TOGGLE = false; // false -> Bread_Pack, true -> Fruits_Vegetables
+var CURRENT_COMPONENTS_OVERRIDE = null;
+
+function updateChangeViewVisibility() {
+    if (selected_model && selected_model.name === 'Camelid') {
+        $('#change-view').show();
+    } else {
+        $('#change-view').hide();
+    }
+}
+
+async function reloadCamelidView() {
+    if (!selected_model || selected_model.name !== 'Camelid') return;
+    CURRENT_COMPONENTS_OVERRIDE = CAMELID_VIEW_TOGGLE ? ['Organs/Fruits_Vegetables']
+                                                     : ['Organs/Bread_Pack'];
+    await init();
+}
+
+// Hook up handler once DOM is ready
+$(document).on('click', '#change-view', async function(){
+    CAMELID_VIEW_TOGGLE = !CAMELID_VIEW_TOGGLE;
+    await reloadCamelidView();
+});
+// === End Camelid Change View ===
+
+
 import Block2D from './js/classes/UI/block2d.js';
 import HTML2D from './js/classes/UI/html2d.js';
 import QuizManager from './js/classes/assessment/quizmanager.js';
@@ -225,8 +253,21 @@ $(document).ready(function(){
                 navigate("loading");
 
                 // Initialize
+				//Start of added code
                 selected_model = modelObj;
-                await init();
+
+// Show/hide Change View button depending on model
+updateChangeViewVisibility();
+if (selected_model && selected_model.name === 'Camelid') {
+    // Set default view each time we enter Camelid
+    CURRENT_COMPONENTS_OVERRIDE = CAMELID_VIEW_TOGGLE ? ['Organs/Fruits_Vegetables']
+                                                      : ['Organs/Bread_Pack'];
+} else {
+    CURRENT_COMPONENTS_OVERRIDE = null;
+}
+
+await init();
+//End of added code
 
                 // show the page
                 navigate("vr_explorer");
@@ -380,7 +421,9 @@ function setBoneListComponentActive(name, should_scroll) {
 
 // Initialize WebGL Model
 async function init() {
-
+//Added code 
+	updateChangeViewVisibility();
+//End of added code
     container = $("#vr_explorer")[0];
     container.innerHTML = "";
     $("#vr_button_frame")[0].innerHTML = "";
@@ -436,7 +479,13 @@ async function init() {
 
     // Instead show percentage loaded
     let num_bones_loaded = 0;
-    let num_bones = selected_model.components.length;
+    //changed code
+	let components_list = (selected_model && selected_model.name === 'Camelid' && Array.isArray(CURRENT_COMPONENTS_OVERRIDE))
+    ? CURRENT_COMPONENTS_OVERRIDE
+    : selected_model.components;
+
+let num_bones = components_list.length;
+//end of changed code
 
     root_bone = bone;
     root_bone.position.copy(MODEL_POSITION_WEB);
@@ -449,7 +498,7 @@ async function init() {
     bone = new THREE.Group();
     root_bone.add(bone);
 
-    for (const model of selected_model.components){
+    for (const model of components_list){ // Changed
 
 
         let result = await loader.loadAsync( model + '.glb');
