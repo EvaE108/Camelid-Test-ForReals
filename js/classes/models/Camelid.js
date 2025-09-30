@@ -3,7 +3,6 @@ import {Model} from "./models.js";
 let bonesList = [
     "Organs/Bread_Pack",
     "Organs/Fruits_Vegetables",
-    "Organs/Placeholder"
 ];
 
 export default new Model(
