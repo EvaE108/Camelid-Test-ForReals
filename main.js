@@ -778,18 +778,38 @@ async function init() {
 
 //Start of added code
 
-let OUTSIDE =  true;
+// track state
+let OUTSIDE = true; // start "outside view" (organs hidden)
+const CAMELID_ORGAN_GROUPS = ["Bread Pack", "Placeholder"];
+
+function setCamelidOrgansVisible(visible) {
+  if (!root_bone) return;
+  CAMELID_ORGAN_GROUPS.forEach((name) => {
+    const g = root_bone.getObjectByName(name);
+    if (g) g.visible = visible;
+  });
+
+  // Optional: also dim/hide items in the bones list to match visibility
+  CAMELID_ORGAN_GROUPS.forEach((name) => {
+    const li = model_components.get(name);
+    if (li) {
+      li.style.setProperty("opacity", visible ? "1" : "0.4");
+      // or: li.style.setProperty("display", visible ? "revert" : "none");
+    }
+  });
+}
 
 function onClickChangeView() {
-	if (OUTSIDE == true) {
-		LoadModels('Camelid_Inside');
-		OUTSIDE = false;
-	}
-	else
-	{
-		LoadModels('Camelid');
-		OUTSIDE = true;
-	}
+  // toggle organs
+  OUTSIDE = !OUTSIDE;
+  // show organs when INSIDE (OUTSIDE=false), hide when OUTSIDE=true
+  setCamelidOrgansVisible(!OUTSIDE);
+
+  // Optional: update button label to reflect the *next* action
+  $('#change-view').text(OUTSIDE ? 'Show Inside' : 'Show Outside');
+}
+
+//End of added code
 		
 		
 	
