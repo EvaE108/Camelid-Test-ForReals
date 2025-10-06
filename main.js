@@ -737,9 +737,14 @@ async function init() {
     $('#hide-toggle').click(onClickHide);
     $('#show-all').click(onClickShowAll);
 
+	//Start of added code
+	$('#change-view').click(onClickChangeView);
+	//end of addded code
+
     $('#quiz-mode').click(onStartQuizMode);
     $('#explore-mode').click(onStartExploreMode);
     $('#quiz-submit').click(onClickQuizSubmit);
+
 
     $('#see-bone-info').click(()=>{
         //$('#see-bone-info').toggleClass(".see-bone-info-selected")
@@ -770,6 +775,24 @@ async function init() {
     //     })(console[verb], verb, log);
     // });
 }
+
+//Start of added code
+
+let OUTSIDE =  true;
+
+function onClickChangeView() {
+	if (OUTSIDE == true) {
+		LoadModels('Camelid_Inside');
+		OUTSIDE = false;
+	}
+	else
+	{
+		LoadModels('Camelid');
+		OUTSIDE = true;
+	}
+		
+		
+	
 
 // -- Important Action Functions (select, deselect)
 function deselectBone() {
