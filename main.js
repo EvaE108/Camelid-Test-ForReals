@@ -780,81 +780,88 @@ async function init() {
 
 //Start of added code
 
-// state + names (use parsed display names with spaces)
-let OUTSIDE = true; // start outside: Bread/Placeholder shown, Fruits hidden
-const TOGGLE_HIDE_GROUPS = ["Bread Pack", "Placeholder"];
-const FRUITS_MODEL_NAME = "Fruits Vegetables";
+//Start of added code
 
-// sync the eye icon in the sidebar list (if present)
+// Outside: Bread/Placeholder shown, Fruits hidden
+let OUTSIDE = true;
+const OUTSIDE_SHOW = ["Bread Pack", "Placeholder"];
+const INSIDE_SHOW = ["Fruits Vegetables"];
+
+// Update the sidebar eye icon to match visibility (if present)
 function reflectUiVisibility(name, visible) {
   if (typeof model_components === "undefined" || !model_components) return;
   const li = model_components.get(name);
   if (!li) return;
   const eye = li.getElementsByTagName("div")[0];
-  if (eye && eye.classList) eye.classList.toggle("eye-closed", !visible); // why: match UI to scene
+  if (eye && eye.classList) eye.classList.toggle("eye-closed", !visible); // why: mirror scene in UI
 }
 
-function setVisibleByName(name, visible) {
+// Safely set visibility by parsed object name (underscores → spaces in this project)
+function setByName(name, visible) {
   if (typeof root_bone === "undefined" || !root_bone) return;
   const obj = root_bone.getObjectByName(name);
   if (obj) obj.visible = visible;
   reflectUiVisibility(name, visible);
 }
 
-function setGroupsVisible(names, visible) {
-  names.forEach((n) => setVisibleByName(n, visible));
+function setGroup(names, visible) {
+  names.forEach(n => setByName(n, visible));
 }
 
-function applyView(isOutside) {
-  // Outside -> Bread/Placeholder visible, Fruits hidden
-  setGroupsVisible(TOGGLE_HIDE_GROUPS, isOutside);
-  setVisibleByName(FRUITS_MODEL_NAME, !isOutside);
-
-  // next-action label
+function setButtonLabel(isOutside) {
+  const next = isOutside ? "Show Inside" : "Show Outside";
   if (typeof $ === "function") {
-    $("#change-view").text(isOutside ? "Show Inside" : "Show Outside");
+    const $btn = $("#change-view");
+    if ($btn.length) $btn.text(next);
   } else {
     const btn = document.getElementById("change-view");
-    if (btn) btn.textContent = isOutside ? "Show Inside" : "Show Outside";
+    if (btn) btn.textContent = next;
   }
 }
 
+// Apply visibility for current state
+function applyView(isOutside) {
+  setGroup(OUTSIDE_SHOW, isOutside);     // Bread/Placeholder
+  setGroup(INSIDE_SHOW, !isOutside);     // Fruits Vegetables
+  setButtonLabel(isOutside);
+}
+
+// Click handler -> swap
 function onClickChangeView() {
   OUTSIDE = !OUTSIDE;
   applyView(OUTSIDE);
 }
 
-// ensure initial state after model is ready (Fruits hidden on first load)
+// Ensure initial state after model loads
 function initVisibilityWhenReady() {
+  // If already loaded, apply immediately
   if (typeof root_bone !== "undefined" && root_bone) {
-    applyView(true);
+    applyView(true); // Outside on first load
     return;
   }
+  // Poll a few frames until root_bone exists
   let tries = 0, maxTries = 300;
-  (function tick() {
+  (function waitReady() {
     if (typeof root_bone !== "undefined" && root_bone) {
       applyView(true);
       return;
     }
-    if (tries++ < maxTries) requestAnimationFrame(tick);
+    if (tries++ < maxTries) requestAnimationFrame(waitReady);
   })();
 }
 
-// wire up
-(function attachHandlers() {
+// Auto-init + wire button (works with or without jQuery)
+(function attach() {
   if (typeof $ === "function") {
     $(document).ready(function () {
-      $("#change-view").off("click.viewToggle").on("click.viewToggle", onClickChangeView);
+      const $btn = $("#change-view");
+      if ($btn.length) $btn.off("click.viewToggle").on("click.viewToggle", onClickChangeView);
       initVisibilityWhenReady();
     });
   } else {
     window.addEventListener("DOMContentLoaded", () => {
       const btn = document.getElementById("change-view");
-      if (btn) btn.addEventListener("click", onClickChangeView);
-      initVisibilityWhenReady();
-    });
-  }
-})();
+      if (btn) btn.addEventListener("clic
 
 //End of added code
 
