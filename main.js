@@ -778,36 +778,86 @@ async function init() {
 
 //Start of added code
 
-// track state
-let OUTSIDE = true; // start "outside view" (organs hidden)
-const CAMELID_ORGAN_GROUPS = ["Bread Pack", "Placeholder"];
+//Start of added code
 
-function setCamelidOrgansVisible(visible) {
-  if (!root_bone) return;
-  CAMELID_ORGAN_GROUPS.forEach((name) => {
-    const g = root_bone.getObjectByName(name);
-    if (g) g.visible = visible;
-  });
+// state + names (use parsed display names with spaces)
+let OUTSIDE = true; // start outside: Bread/Placeholder shown, Fruits hidden
+const TOGGLE_HIDE_GROUPS = ["Bread Pack", "Placeholder"];
+const FRUITS_MODEL_NAME = "Fruits Vegetables";
 
-  // Optional: also dim/hide items in the bones list to match visibility
-  CAMELID_ORGAN_GROUPS.forEach((name) => {
-    const li = model_components.get(name);
-    if (li) {
-      li.style.setProperty("opacity", visible ? "1" : "0.4");
-      // or: li.style.setProperty("display", visible ? "revert" : "none");
-    }
-  });
+// sync the eye icon in the sidebar list (if present)
+function reflectUiVisibility(name, visible) {
+  if (typeof model_components === "undefined" || !model_components) return;
+  const li = model_components.get(name);
+  if (!li) return;
+  const eye = li.getElementsByTagName("div")[0];
+  if (eye && eye.classList) eye.classList.toggle("eye-closed", !visible); // why: match UI to scene
+}
+
+function setVisibleByName(name, visible) {
+  if (typeof root_bone === "undefined" || !root_bone) return;
+  const obj = root_bone.getObjectByName(name);
+  if (obj) obj.visible = visible;
+  reflectUiVisibility(name, visible);
+}
+
+function setGroupsVisible(names, visible) {
+  names.forEach((n) => setVisibleByName(n, visible));
+}
+
+function applyView(isOutside) {
+  // Outside -> Bread/Placeholder visible, Fruits hidden
+  setGroupsVisible(TOGGLE_HIDE_GROUPS, isOutside);
+  setVisibleByName(FRUITS_MODEL_NAME, !isOutside);
+
+  // next-action label
+  if (typeof $ === "function") {
+    $("#change-view").text(isOutside ? "Show Inside" : "Show Outside");
+  } else {
+    const btn = document.getElementById("change-view");
+    if (btn) btn.textContent = isOutside ? "Show Inside" : "Show Outside";
+  }
 }
 
 function onClickChangeView() {
-  // toggle organs
   OUTSIDE = !OUTSIDE;
-  // show organs when INSIDE (OUTSIDE=false), hide when OUTSIDE=true
-  setCamelidOrgansVisible(!OUTSIDE);
-
-  // Optional: update button label to reflect the *next* action
-  $('#change-view').text(OUTSIDE ? 'Show Inside' : 'Show Outside');
+  applyView(OUTSIDE);
 }
+
+// ensure initial state after model is ready (Fruits hidden on first load)
+function initVisibilityWhenReady() {
+  if (typeof root_bone !== "undefined" && root_bone) {
+    applyView(true);
+    return;
+  }
+  let tries = 0, maxTries = 300;
+  (function tick() {
+    if (typeof root_bone !== "undefined" && root_bone) {
+      applyView(true);
+      return;
+    }
+    if (tries++ < maxTries) requestAnimationFrame(tick);
+  })();
+}
+
+// wire up
+(function attachHandlers() {
+  if (typeof $ === "function") {
+    $(document).ready(function () {
+      $("#change-view").off("click.viewToggle").on("click.viewToggle", onClickChangeView);
+      initVisibilityWhenReady();
+    });
+  } else {
+    window.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("change-view");
+      if (btn) btn.addEventListener("click", onClickChangeView);
+      initVisibilityWhenReady();
+    });
+  }
+})();
+
+//End of added code
+
 
 //End of added code
 		
