@@ -777,9 +777,6 @@ async function init() {
 }
 
 //Start of added code
-
-//Start of added code
-
 //Start of added code
 
 // Outside: Bread/Placeholder shown, Fruits hidden
@@ -861,9 +858,14 @@ function initVisibilityWhenReady() {
   } else {
     window.addEventListener("DOMContentLoaded", () => {
       const btn = document.getElementById("change-view");
-      if (btn) btn.addEventListener("clic
+      if (btn) btn.addEventListener("click", onClickChangeView);
+      initVisibilityWhenReady();
+    });
+  }
+})();
 
 //End of added code
+
 
 
 //End of added code
