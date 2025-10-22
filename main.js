@@ -781,8 +781,8 @@ async function init() {
 
 // Outside: Bread/Placeholder shown, Fruits hidden
 let OUTSIDE = true;
-const OUTSIDE_SHOW = ["Bread Pack", "Placeholder"];
-const INSIDE_SHOW = ["Fruits Vegetables"];
+const OUTSIDE_SHOW = ["Organs/Bread_Pack"];
+const INSIDE_SHOW = ["Organs/Fruits_Vegetables"];
 
 // Update the sidebar eye icon to match visibility (if present)
 function reflectUiVisibility(name, visible) {
@@ -805,22 +805,23 @@ function setGroup(names, visible) {
   names.forEach(n => setByName(n, visible));
 }
 
-function setButtonLabel(isOutside) {
-  const next = isOutside ? "Show Inside" : "Show Outside";
+function setButtonLabel(_) {
   if (typeof $ === "function") {
     const $btn = $("#change-view");
-    if ($btn.length) $btn.text(next);
+    if ($btn.length) $btn.text("Change View");
   } else {
     const btn = document.getElementById("change-view");
-    if (btn) btn.textContent = next;
+    if (btn) btn.textContent = "Change View";
   }
 }
 
 // Apply visibility for current state
 function applyView(isOutside) {
+  setByName("Organs/Placeholder", false)
+  
   setGroup(OUTSIDE_SHOW, isOutside);     // Bread/Placeholder
   setGroup(INSIDE_SHOW, !isOutside);     // Fruits Vegetables
-  setButtonLabel(isOutside);
+  setButtonLabel(null);
 }
 
 // Click handler -> swap
