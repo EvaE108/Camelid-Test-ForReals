@@ -781,8 +781,8 @@ async function init() {
 
 // Outside: Bread/Placeholder shown, Fruits hidden
 let OUTSIDE = true;
-const OUTSIDE_SHOW = ["Organs/Bread_Pack"];
-const INSIDE_SHOW = ["Organs/Fruits_Vegetables"];
+const OUTSIDE_SHOW = ["Bread Pack"];
+const INSIDE_SHOW = ["Fruits Vegetables"];
 
 // Update the sidebar eye icon to match visibility (if present)
 function reflectUiVisibility(name, visible) {
@@ -817,7 +817,7 @@ function setButtonLabel(_) {
 
 // Apply visibility for current state
 function applyView(isOutside) {
-  setByName("Organs/Placeholder", false)
+  setByName("Placeholder", false)
   
   setGroup(OUTSIDE_SHOW, isOutside);     // Bread/Placeholder
   setGroup(INSIDE_SHOW, !isOutside);     // Fruits Vegetables
