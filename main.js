@@ -780,78 +780,62 @@ async function init() {
 //Start of added code
 
 // Outside: Bread/Placeholder shown, Fruits hidden
-let OUTSIDE = true;
-const OUTSIDE_SHOW = ["Bread Pack"];
-const INSIDE_SHOW = ["Fruits Vegetables"];
 
-// Update the sidebar eye icon to match visibility (if present)
-function reflectUiVisibility(name, visible) {
-  if (typeof model_components === "undefined" || !model_components) return;
-  const li = model_components.get(name);
-  if (!li) return;
-  const eye = li.getElementsByTagName("div")[0];
-  if (eye && eye.classList) eye.classList.toggle("eye-closed", !visible); // why: mirror scene in UI
+// === Camelid view toggle (minimal) ===
+
+// start outside (Bread visible)
+let OUTSIDE = true;
+
+// use your UI keys; we'll map them to real THREE names
+const OUTSIDE_SHOW = ["Organs/Bread_Pack"];
+const INSIDE_SHOW  = ["Organs/Fruits_Vegetables"];
+
+// map "Organs/Bread_Pack" -> "Bread Pack"
+function normObjectName(uiName) {
+  const last = uiName.split('/').pop();
+  return last.replace(/_/g, ' ');
 }
 
-// Safely set visibility by parsed object name (underscores → spaces in this project)
 function setByName(name, visible) {
-  if (typeof root_bone === "undefined" || !root_bone) return;
-  const obj = root_bone.getObjectByName(name);
+  if (!window.root_bone) return;
+  const obj = root_bone.getObjectByName(normObjectName(name));
   if (obj) obj.visible = visible;
-  reflectUiVisibility(name, visible);
+  // keep the sidebar eye state in sync if that helper exists
+  if (typeof reflectUiVisibility === "function") {
+    reflectUiVisibility(name, visible);
+  }
 }
 
 function setGroup(names, visible) {
   names.forEach(n => setByName(n, visible));
 }
 
-function setButtonLabel(_) {
-  if (typeof $ === "function") {
-    const $btn = $("#change-view");
-    if ($btn.length) $btn.text("Change View");
-  } else {
-    const btn = document.getElementById("change-view");
-    if (btn) btn.textContent = "Change View";
-  }
-}
-
-// Apply visibility for current state
 function applyView(isOutside) {
-  setByName("Placeholder", false)
-  
-  setGroup(OUTSIDE_SHOW, isOutside);     // Bread/Placeholder
-  setGroup(INSIDE_SHOW, !isOutside);     // Fruits Vegetables
-  setButtonLabel(null);
+  // placeholder is always hidden
+  setByName("Organs/Placeholder", false);
+  // Bread when outside, Fruit when inside
+  setGroup(OUTSIDE_SHOW, isOutside);
+  setGroup(INSIDE_SHOW, !isOutside);
 }
 
-// Click handler -> swap
 function onClickChangeView() {
   OUTSIDE = !OUTSIDE;
   applyView(OUTSIDE);
 }
 
-// Ensure initial state after model loads
 function initVisibilityWhenReady() {
-  // If already loaded, apply immediately
-  if (typeof root_bone !== "undefined" && root_bone) {
-    applyView(true); // Outside on first load
-    return;
-  }
-  // Poll a few frames until root_bone exists
-  let tries = 0, maxTries = 300;
-  (function waitReady() {
-    if (typeof root_bone !== "undefined" && root_bone) {
-      applyView(true);
-      return;
-    }
-    if (tries++ < maxTries) requestAnimationFrame(waitReady);
+  const maxTries = 300;
+  let tries = 0;
+  (function wait() {
+    if (window.root_bone) { applyView(true); return; }
+    if (tries++ < maxTries) requestAnimationFrame(wait);
   })();
 }
 
-// Auto-init + wire button (works with or without jQuery)
+// works with or without jQuery
 (function attach() {
   if (typeof $ === "function") {
-    $(document).ready(function () {
+    $(function () {
       const $btn = $("#change-view");
       if ($btn.length) $btn.off("click.viewToggle").on("click.viewToggle", onClickChangeView);
       initVisibilityWhenReady();
@@ -864,6 +848,10 @@ function initVisibilityWhenReady() {
     });
   }
 })();
+
+
+
+
 
 //End of added code
 
