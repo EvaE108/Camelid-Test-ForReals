@@ -1,3 +1,52 @@
+/*═══════════════════════════════════════════════════════════════════════════════
+ * VETERINARY VR ANATOMY VIEWER - MAIN APPLICATION FILE
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * This file contains the core application logic for the interactive 3D anatomy
+ * viewer. It handles:
+ *   - 3D scene setup and rendering
+ *   - Model loading and management
+ *   - User interactions (mouse, touch, VR controllers)
+ *   - UI management (sidebar, bone list, search)
+ *   - Quiz/assessment functionality
+ *   - VR/XR mode support
+ * 
+ * FILE STRUCTURE:
+ *   1. IMPORTS & DEPENDENCIES (lines ~52- 70)
+ *   2. GLOBAL VARIABLES & STATE (lines ~84-172)
+ *   3. PAGE NAVIGATION SYSTEM (lines ~186-259)
+ *   4. MODEL SELECTION & INITIALIZATION (lines ~272-327)
+ *   5. BONE SELECTION & INTERACTION (lines ~335-471)
+ *   6. SCENE INITIALIZATION (init function) (lines ~485-882)
+ *   7. BUTTON CLICK HANDLERS (lines ~898-1180)
+ *   8. WEB UI CONTROLS SETUP (lines ~1194-1293)
+ *   9. QUIZ/ASSESSMENT SYSTEM (lines ~1310-1435)
+ *   10. BONE HOVER/SELECTION CALLBACKS (lines ~1451-1501)
+ *   11. ANIMATION & RENDER LOOP (lines ~1525-1781)
+ *   12. VR/XR SYSTEM (lines ~1807-2026)
+ *   13. UTILITY FUNCTIONS (lines ~2042-2137)
+ * 
+ * DEVELOPER NOTES:
+ *   - Global state variables are prefixed with CAPITALS (e.g., SELECTED_BONES)
+ *   - Main render loop is in animate() and render() functions
+ *   - VR functionality is in onStartXR() and related functions
+ * 
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
+
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 1: IMPORTS & DEPENDENCIES
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Import all required libraries and modules:
+ *   - THREE.js for 3D rendering
+ *   - OrbitControls for camera movement
+ *   - GLTFLoader for loading 3D models
+ *   - VRButton for entering VR mode
+ *   - Custom classes for models, UI, and quizzes
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
+
 // For static loading (comment out for dynamic loading and make sure up to date)
 import  * as THREE from './js/modules/three.js';
 import { OrbitControls } from './js/modules/OrbitControls.js';
@@ -18,7 +67,16 @@ import Block2D from './js/classes/UI/block2d.js';
 import HTML2D from './js/classes/UI/html2d.js';
 import QuizManager from './js/classes/assessment/quizmanager.js';
 
-
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 2: GLOBAL VARIABLES & STATE
+ *═══════════════════════════════════════════════════════════════════════════════
+ * All global variables that track application state and hold references to
+ * important objects like the scene, camera, renderer, and selected bones.
+ * 
+ * NAMING CONVENTION:
+ *   - UPPERCASE variables = State flags (e.g., SELECTED, IN_XR)
+ *   - lowercase variables = Object references (e.g., camera, scene)
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
 // -- Global definitions/variables
 
@@ -111,6 +169,20 @@ var selected_model; // Selected model
 // Assessment Mangager
 var quizManager = new QuizManager();
 
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 3: PAGE NAVIGATION SYSTEM
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Simple page system that shows/hides different div sections:
+ *   - home: Model selection screen
+ *   - about: Information about the project
+ *   - contact: Contact form
+ *   - loading: Loading screen with progress bar
+ *   - vr_explorer: Main 3D viewer interface
+ * 
+ * The Page class handles showing/hiding groups of div elements together.
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 // Pages used for navigation
 // Just hide and show divs with jquery
 class Page {
@@ -185,6 +257,17 @@ rs();
 // Go to loading screen
 navigate("loading");
 
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 4: MODEL SELECTION & INITIALIZATION
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Handles the home screen where users select which animal model to view.
+ * Creates a card for each available model with:
+ *   - Preview image
+ *   - Model name
+ *   - Description
+ *   - Click handler that loads the model
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 // On page ready
 $(document).ready(function(){
 
@@ -240,6 +323,13 @@ $(document).ready(function(){
     });
 
 });
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 5: BONE SELECTION & INTERACTION HANDLERS
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Functions that handle when users select, hover, or search for bones.
+ * Manages the bone list sidebar and search functionality.
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
 // On bone selection
 function selectBone(clicked_bone, clicked_canvas) {
@@ -377,6 +467,20 @@ function setBoneListComponentActive(name, should_scroll) {
             model_components.get(LAST_SELECTED_BONES.name).classList.remove("selected-component");
 
 }
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 6: SCENE INITIALIZATION (init function)
+ *═══════════════════════════════════════════════════════════════════════════════
+ * The init() function is called when a user selects a model.
+ * It sets up the entire 3D environment:
+ *   1. Creates camera, scene, and lights
+ *   2. Loads all bone meshes from .glb files
+ *   3. Sets up VR button and controls
+ *   4. Creates UI elements for both web and VR
+ *   5. Sets up quiz system
+ * 
+ * This is the most complex function in the file (~400 lines).
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
 // Initialize WebGL Model
 async function init() {
@@ -776,90 +880,19 @@ async function init() {
     // });
 }
 
-//Start of added code
-//Start of added code
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 7: BUTTON CLICK HANDLERS & ACTION FUNCTIONS
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Functions that handle button clicks and perform actions:
+ *   - deselectBone() - Clear bone selection
+ *   - onClickDeselect() - Deselect button handler
+ *   - onClickFocus() - Focus mode (hide all except selected)
+ *   - onClickHide() - Hide/show selected bone
+ *   - onClickShowAll() - Make all bones visible
+ * 
+ * These functions update both the 3D scene and the UI to reflect changes.
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
-// Outside: Bread/Placeholder shown, Fruits hidden
-
-// === Camelid view toggle (minimal) ===
-
-// start outside (Bread visible)
-let OUTSIDE = true;
-
-// use your UI keys; we'll map them to real THREE names
-const OUTSIDE_SHOW = ["Organs/Bread_Pack"];
-const INSIDE_SHOW  = ["Organs/Fruits_Vegetables"];
-
-// map "Organs/Bread_Pack" -> "Bread Pack"
-function normObjectName(uiName) {
-  const last = uiName.split('/').pop();
-  return last.replace(/_/g, ' ');
-}
-
-function setByName(name, visible) {
-  if (!window.root_bone) return;
-  const obj = root_bone.getObjectByName(normObjectName(name));
-  if (obj) obj.visible = visible;
-  // keep the sidebar eye state in sync if that helper exists
-  if (typeof reflectUiVisibility === "function") {
-    reflectUiVisibility(name, visible);
-  }
-}
-
-function setGroup(names, visible) {
-  names.forEach(n => setByName(n, visible));
-}
-
-function applyView(isOutside) {
-  // placeholder is always hidden
-  setByName("Organs/Placeholder", false);
-  // Bread when outside, Fruit when inside
-  setGroup(OUTSIDE_SHOW, isOutside);
-  setGroup(INSIDE_SHOW, !isOutside);
-}
-
-function onClickChangeView() {
-  OUTSIDE = !OUTSIDE;
-  applyView(OUTSIDE);
-}
-
-function initVisibilityWhenReady() {
-  const maxTries = 300;
-  let tries = 0;
-  (function wait() {
-    if (window.root_bone) { applyView(true); return; }
-    if (tries++ < maxTries) requestAnimationFrame(wait);
-  })();
-}
-
-// works with or without jQuery
-(function attach() {
-  if (typeof $ === "function") {
-    $(function () {
-      const $btn = $("#change-view");
-      if ($btn.length) $btn.off("click.viewToggle").on("click.viewToggle", onClickChangeView);
-      initVisibilityWhenReady();
-    });
-  } else {
-    window.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("change-view");
-      if (btn) btn.addEventListener("click", onClickChangeView);
-      initVisibilityWhenReady();
-    });
-  }
-})();
-
-
-
-
-
-//End of added code
-
-
-
-//End of added code
-		
-		
 	
 
 // -- Important Action Functions (select, deselect)
@@ -1146,6 +1179,17 @@ function onClickShowAll() {
     $('#hide-toggle').removeClass('sidebar-button-active');
 }
 
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 8: WEB UI CONTROLS SETUP
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Additional UI control functions (mostly unused/commented out):
+ *   - createGUIWebControls() - Rotation/zoom controls (not currently active)
+ *   - xrRotate() - Rotate model in VR
+ *   - xrTranslate() - Move model in VR
+ * 
+ * These were part of earlier iterations and may be re-enabled in future.
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 // GUI Web Controls (unused for now, may do later)
 function createGUIWebControls() {
     let mouseDownId = -1;
@@ -1245,6 +1289,22 @@ function xrTranslate(dx, dz) {
     player.position.x += 0.04 * dx;
     player.position.z += 0.04 * dz;
 }
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 9: QUIZ/ASSESSMENT SYSTEM
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Functions for the "Quiz Me" feature that tests user knowledge:
+ *   - onStartExploreMode() - Switch back to explore mode
+ *   - onStartQuizMode() - Start quiz session
+ *   - onClickQuizSubmit() - Check if selected bone is correct answer
+ *   - toggleBoneInfoCheckBox() - Show/hide bone names during quiz
+ * 
+ * Quiz Flow:
+ *   1. User clicks "Quiz Me" → onStartQuizMode()
+ *   2. Display question: "Select the [BoneName]"
+ *   3. User clicks bone → onClickQuizSubmit()
+ *   4. Check answer, give feedback, move to next question
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
 // Assessment
 function onStartExploreMode() {
@@ -1374,6 +1434,19 @@ function onClickToggleBoneInfo() {
     }
 }
 
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 10: BONE HOVER & SELECTION CALLBACKS
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Callback functions triggered by bone interactions:
+ *   - onSelectedBone() - Called when bone is selected
+ *   - onDeselectedBone() - Called when bone is deselected
+ *   - onEnterHoverBone() - Called when mouse enters bone
+ *   - onLeaveHoverBone() - Called when mouse leaves bone
+ * 
+ * These handle UI updates and state changes in response to user interactions.
+ * In Quiz mode, some callbacks behave differently (e.g., don't show bone name).
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 // Bone selection
 function onSelectedBone() {
 
@@ -1426,6 +1499,28 @@ function onLeaveHoverBone(bone_group) {
         xr_controls_ui.bone.text.update();
     }
 }
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 11: ANIMATION & RENDER LOOP
+ *═══════════════════════════════════════════════════════════════════════════════
+ * The beating heart of the application - runs 60 times per second!
+ * 
+ * Key functions:
+ *   - animate() - Requests next frame from browser
+ *   - render() - The main render function that:
+ *       • Updates raycaster position (mouse or VR controller)
+ *       • Detects intersections with bones
+ *       • Handles hover effects
+ *       • Checks VR UI intersections
+ *       • Renders the 3D scene to the canvas
+ * 
+ * RAYCASTING CONCEPT:
+ *   Imagine a laser pointer from your mouse/controller into the 3D scene.
+ *   raycaster.intersectObjects() finds what objects the "laser" hits.
+ *   This is how we detect which bone you're pointing at!
+ * 
+ * This function handles different behavior for web mode vs VR mode.
+ *═══════════════════════════════════════════════════════════════════════════════*/
 
 // -- Animation and rendering
 function animate(t,frame) {
@@ -1685,6 +1780,30 @@ function render(frame) {
 
 }
 
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 12: VR/XR SYSTEM
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Handles Virtual Reality mode using WebXR API:
+ *   - addXRControllerEvents() - Setup controller input handlers
+ *   - onStartXR() - Called when entering VR mode
+ *   - onLeaveXR() - Called when exiting VR mode
+ *   - onRegisterXRController() - Called when controller connects
+ *   - onRemoveXRController() - Called when controller disconnects
+ *   - onXRInputSourcesChange() - Called when controllers change
+ * 
+ * VR MODE CHANGES:
+ *   - Model repositioned closer to user (MODEL_POSITION_XR)
+ *   - UI panels attached to controllers (left hand = controls, right hand = guide)
+ *   - OrbitControls disabled (VR uses controller input instead)
+ *   - Raycasting uses controller ray instead of mouse position
+ * 
+ * CONTROLLERS:
+ *   - Left hand: Rotate/navigate + UI panel with buttons
+ *   - Right hand: Point at bones, navigation tooltips
+ *   - Trigger button: Select bones or click UI buttons
+ *   - Thumbstick/Trackpad: Move around the model
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 // Callbacks for when we enter/leave VR
 function addXRControllerEvents(handedness) {
     if (handedness == "left") {
@@ -1905,6 +2024,20 @@ function onXRInputSourcesChange(event) {
         onRemoveXRController(input);
     }
 }
+
+/*═══════════════════════════════════════════════════════════════════════════════
+ * SECTION 13: UTILITY FUNCTIONS
+ *═══════════════════════════════════════════════════════════════════════════════
+ * Helper functions used throughout the application:
+ *   - getCenterPoint() - Calculate geometric center of a 3D mesh
+ *   - getMeshFromBoneGroup() - Extract mesh from bone group hierarchy
+ *   - showXRControls() - Show or hide VR UI panels
+ *   - log() - Display debug messages on screen
+ * 
+ * These are pure utility functions that don't depend on global state
+ * and can be called from anywhere in the code.
+ *═══════════════════════════════════════════════════════════════════════════════*/
+
 
 // -- Misc/Helper functions
 function getCenterPoint(mesh) {
